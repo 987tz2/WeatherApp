@@ -15,10 +15,11 @@ class Main: UIViewController {
     let cellID = "cellID"
     var currentTemperature: Double = 0.0
     var dateToday = "Monday, April 23"
-    var todayHighTemperature = 90
-    var todayLowTemperature = 70
+    var todayHighTemperature : Double = 90.0
+    var todayLowTemperature: Double = 70.0
     var userCurrentLocation = "California, Irvine"
     var dailyWeather: [DailyArray] = []
+    var dailyHigh: [Int] = []
     var locationManager = CLLocationManager()
     var lat = 34.0
     var long = -118.0
@@ -150,14 +151,25 @@ class Main: UIViewController {
         
         if (UserDefaults().bool(forKey: "fahrenheit") == true) {
             self.currentTemperature = ((self.currentTemperature - 32) * 5/9)
+            self.todayHighTemperature = ((self.todayHighTemperature - 32) * 5/9)
+            self.todayLowTemperature = ((self.todayLowTemperature - 32) * 5/9)
             UserDefaults().set(false, forKey: "fahrenheit")
             UserDefaults().set("C", forKey: "CorF")
+            
         } else {
             self.currentTemperature = ((self.currentTemperature * 1.8) + 32)
+            self.todayHighTemperature = ((self.todayHighTemperature * 1.8) + 32)
+            self.todayLowTemperature = ((self.todayLowTemperature * 1.8) + 32)
             UserDefaults().set(true, forKey: "fahrenheit")
             UserDefaults().set("F", forKey: "CorF")
         }
         
+        for day in dailyWeather{
+            print(day.temperatureHigh)
+            day.temperatureHigh = ((day - 32) * 5/9)
+        }
+        
+        self.todayHighLowTemperatureLabel.text = "\(Int(self.todayHighTemperature))° / \(Int(self.todayLowTemperature))°"
         self.temperatureLabel.setTitle(String(Int(self.currentTemperature)), for: .normal)
         self.degreesSymbole.text = "°\((UserDefaults().string(forKey: "CorF"))!)"
         
@@ -170,14 +182,15 @@ class Main: UIViewController {
     
     //MARK: - Updating Weather Data
     
-    struct CurrentWeather: Decodable {
-        let temperature: Double
-        let precipProbability: Double
-    }
-    
     struct WeatherInterval: Decodable {
         let currently: CurrentWeather
         let daily: DailyWeather
+    }
+    
+    struct CurrentWeather: Decodable {
+        let temperature: Double
+        let precipProbability: Double
+        let time: Double
     }
     
     struct DailyWeather: Decodable {
@@ -188,6 +201,7 @@ class Main: UIViewController {
     
     struct DailyArray: Decodable {
         let temperatureHigh: Double
+        let temperatureLow: Double
         let time: Double
     }
     
@@ -205,19 +219,31 @@ class Main: UIViewController {
             
                 for data in weather.daily.data {
                     self.dailyWeather.append(data)
+                    
                 }
                 
                 DispatchQueue.main.async {
                     self.currentTemperature = weather.currently.temperature
+                    self.todayHighTemperature = (weather.daily.data[0].temperatureHigh)
+                    self.todayLowTemperature = (weather.daily.data[0].temperatureLow)
                     
                     if (UserDefaults().bool(forKey: "fahrenheit") == false){
                         self.currentTemperature = ((self.currentTemperature - 32) * 5/9)
+                        self.todayLowTemperature = ((self.todayLowTemperature - 32) * 5/9)
+                        self.todayHighTemperature = ((self.todayHighTemperature - 32) * 5/9)
                         UserDefaults().set("C", forKey: "CorF")
                     } else {
                         UserDefaults().set("F", forKey: "CorF")
                     }
                     
+                    let date = Date(timeIntervalSince1970: weather.currently.time)
+//                    dailyWeather[indexPath.row].time
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "MMM d, h:mm a"
+                    let stringDate = dateFormatter.string(from: date)
                     
+                    self.dateTodayLabel.text = stringDate
+                    self.todayHighLowTemperatureLabel.text = "\(Int(self.todayHighTemperature))° / \(Int(self.todayLowTemperature))°"
                     self.temperatureLabel.setTitle("\(Int(self.currentTemperature))", for: .normal)
                     self.degreesSymbole.text = "°\((UserDefaults().string(forKey: "CorF"))!)"
                     
