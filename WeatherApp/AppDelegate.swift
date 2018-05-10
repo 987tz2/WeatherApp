@@ -15,7 +15,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        window = UIWindow(frame: UIScreen.main.bounds)
+        window?.rootViewController = Main()
+        window?.makeKeyAndVisible()
+        
+        let launchedBefore = UserDefaults.standard.bool(forKey: "launchedBefore")
+        if launchedBefore
+        {
+//            print("Not first launch.")
+        }
+        else
+        {
+            
+        UserDefaults().set(true, forKey: "fahrenheit")
+        UserDefaults().set("F", forKey: "CorF")
+//            print("First launch")
+            
+            
+        UserDefaults.standard.set(true, forKey: "launchedBefore")
+            
+        }
+        
         return true
     }
 
